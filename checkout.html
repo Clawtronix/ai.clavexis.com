@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="cx-api" content="https://api.clavexis.com">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Checkout — ClavexisAI</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/css/base.css"><link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page"><div class="wrap">
+  <div class="page-head"><p class="eyebrow">Checkout</p><h1 id="title">Your order</h1></div>
+
+  <div class="two">
+    <div class="stack">
+      <!-- 1. account -->
+      <section class="panel hidden" id="stepAuth">
+        <h2>1 · Your account</h2>
+        <p class="muted small">Your licence key is kept in your ClavexisAI account.</p>
+        <div class="seg mt" id="authTabs"><button data-t="register" class="on">Create account</button><button data-t="login">Sign in</button></div>
+        <form id="authForm" class="mt">
+          <div class="field" data-only="register"><label for="aname">Full name</label><input class="input" id="aname" autocomplete="name"></div>
+          <div class="field"><label for="aemail">Email</label><input class="input" id="aemail" type="email" required autocomplete="email"></div>
+          <div class="field"><label for="apw">Password</label><input class="input" id="apw" type="password" required minlength="8" autocomplete="new-password"></div>
+          <p class="err" id="authErr"></p>
+          <button class="btn btn-primary btn-block" type="submit" id="authBtn">Create account &amp; continue</button>
+        </form>
+      </section>
+
+      <!-- 2. licence agreement -->
+      <section class="panel hidden" id="stepEula">
+        <h2>2 · Billing details and licence agreement</h2>
+        <h3 class="mt">Invoice to</h3>
+        <div class="row" style="gap:.8rem;align-items:flex-start">
+          <div class="field" style="flex:1;min-width:200px"><label for="billName">Name</label>
+            <input class="input" id="billName" autocomplete="name" maxlength="120"></div>
+          <div class="field" style="flex:1;min-width:200px" id="stateField"><label for="billState">State</label>
+            <select class="input" id="billState" autocomplete="address-level1"><option value="">Choose your state…</option></select></div>
+        </div>
+        <label class="check"><input type="checkbox" id="isBiz"> <span>I'm buying for a business and want a GST invoice (add GSTIN)</span></label>
+        <div class="row hidden" id="bizFields" style="gap:.8rem;align-items:flex-start">
+          <div class="field" style="flex:1;min-width:200px"><label for="billCompany">Business name (as registered for GST)</label>
+            <input class="input" id="billCompany" autocomplete="organization" maxlength="160"></div>
+          <div class="field" style="flex:1;min-width:200px"><label for="billGstin">GSTIN</label>
+            <input class="input mono" id="billGstin" maxlength="15" placeholder="27ABCDE1234F1Z5" autocomplete="off" style="text-transform:uppercase"></div>
+        </div>
+        <h3 class="mt2">Licence agreement</h3>
+        <p class="muted small">Please read it. It's short, and signing it is part of buying.</p>
+        <div class="eula-box mt" id="eulaBox">Loading…</div>
+        <div class="note warn mt small"><b>In short:</b> the licence is for you (or your organisation) only. If you republish the software or give it
+          or your key to anyone else, you'll owe the price of the licence for every copy provided, plus compensation.</div>
+        <label class="check mt"><input type="checkbox" id="agree"> <span>I have read and agree to the ClavexisAI End User Licence Agreement
+          (version <b id="eulaVer"></b>).</span></label>
+        <div class="field mt"><label for="signName">Type your full name to sign</label>
+          <input class="input" id="signName" autocomplete="name" placeholder="e.g. Priya Sharma"></div>
+        <p class="err" id="eulaErr"></p>
+        <button class="btn btn-primary btn-block" id="toPay">Sign and continue to payment</button>
+      </section>
+
+      <!-- 3. payment -->
+      <section class="panel hidden" id="stepPay">
+        <h2>3 · Pay <span id="payAmount"></span></h2>
+        <div class="seg pay-tabs mt" id="payTabs"></div>
+        <div id="payUpi" class="hidden">
+          <div class="row" style="align-items:flex-start;gap:1.4rem">
+            <div class="qr" id="qr"></div>
+            <div class="stack" style="flex:1;min-width:220px;gap:.7rem">
+              <p class="muted small">Scan with any UPI app — Google Pay, PhonePe, Paytm, BHIM or your bank's app. The amount and order
+                reference fill in by themselves.</p>
+              <dl class="kv"><dt>UPI ID</dt><dd id="upiId"></dd><dt>Name</dt><dd id="upiName"></dd><dt>Amount</dt><dd id="upiAmt"></dd>
+                <dt>Note</dt><dd id="upiNote"></dd></dl>
+              <a class="btn btn-ghost btn-sm" id="upiLink" href="#">Open in UPI app (on your phone)</a>
+            </div>
+          </div>
+        </div>
+        <div id="payCard" class="hidden">
+          <p class="muted small">Pay by credit/debit card, PayPal, Apple Pay or Google Pay on the secure checkout of
+            <b id="cardName"></b>, our reseller, who handles the payment and emails your receipt. Price in US dollars:</p>
+          <p class="mt"><button class="btn btn-primary" type="button" id="cardGo">Pay <span id="cardAmt"></span> by card / PayPal</button></p>
+          <p class="err" id="cardErr"></p>
+          <p class="dim small mt">Your licence key appears here and in your email as soon as the payment goes through.</p>
+        </div>
+        <div id="payBank" class="hidden">
+          <p class="muted small">Transfer the exact amount by IMPS, NEFT or RTGS, with the order reference in the remarks.</p>
+          <dl class="kv mt" id="bankKv"></dl>
+        </div>
+        <form id="utrForm" class="mt">
+          <h3>After paying</h3>
+          <div class="field"><label for="utr">Transaction reference (UPI ref no. / UTR — 12 digits in your payment app or bank SMS)</label>
+            <input class="input" id="utr" required minlength="6" maxlength="40" autocomplete="off" inputmode="text"></div>
+          <div class="field"><label for="payer">Name on the paying account (helps us find it)</label><input class="input" id="payer" autocomplete="name"></div>
+          <p class="err" id="utrErr"></p>
+          <button class="btn btn-primary btn-block" type="submit">I've paid — confirm my order</button>
+          <button class="btn btn-ghost btn-sm mt" type="button" id="cancelOrder">Cancel this order</button>
+        </form>
+      </section>
+
+      <!-- 4. status -->
+      <section class="panel hidden" id="stepDone">
+        <h2 id="doneTitle">Payment received — we're confirming it</h2>
+        <div id="doneBody"></div>
+      </section>
+    </div>
+
+    <!-- summary -->
+    <aside class="panel summary">
+      <h2>Summary</h2>
+      <div id="sumLines"></div>
+      <div id="codeBox" class="mt">
+        <a href="#" id="codeOpen" class="small" style="color:var(--brand)">Have a discount code?</a>
+        <div id="codeForm" class="hidden">
+          <div class="row" style="gap:.5rem;flex-wrap:nowrap"><input class="input mono" id="codeIn" maxlength="32" placeholder="CODE"
+            autocomplete="off" aria-label="Discount code" style="text-transform:uppercase;flex:1;min-width:0">
+            <button class="btn btn-ghost btn-sm" type="button" id="codeApply">Apply</button></div>
+          <p class="err small" id="codeErr"></p>
+        </div>
+      </div>
+      <p class="dim small mt"><span id="sumNote">Prices in rupees, inclusive of taxes.</span> <a href="/refunds" style="color:var(--brand)">Refund policy</a> ·
+        <a href="/terms" style="color:var(--brand)">Terms of sale</a></p>
+    </aside>
+  </div>
+</div></main>
+
+<script src="/js/site.js"></script>
+<script>
+(async function () {
+  const $ = (id) => document.getElementById(id);
+  const q = new URLSearchParams(location.search);
+  const show = (id) => ['stepAuth', 'stepEula', 'stepPay', 'stepDone'].forEach((s) => $(s).classList.toggle('hidden', s !== id));
+  let user = await CX.chrome();
+  const cfg = await CX.api('/api/plans');
+  let order = null, eula = null, poll = null;
+
+  const want = { plan: q.get('plan'), kind: q.get('kind') === 'lifetime' ? 'lifetime' : 'subscription', months: +q.get('months') || 1 };
+  let code = null;   // {code, label, discount, amount, usd, usd_list} once a code is applied
+  function summarize(o) {
+    const p = cfg.plans.find((x) => x.id === (o ? o.plan : want.plan));
+    if (!p) { $('sumLines').innerHTML = '<p class="err">Unknown plan — <a href="/pricing">choose one</a>.</p>'; return false; }
+    const kind = o ? o.kind : want.kind, months = o ? o.months : want.months;
+    let amount = o ? o.amount : null;
+    if (!o) {
+      if (kind === 'lifetime') amount = p.lifetime;
+      else { const opt = cfg.period_options.find((x) => x.months === months) || cfg.period_options[0]; amount = Math.round(p.monthly * opt.months * (100 - opt.discount_pct) / 100); }
+    }
+    const what = kind === 'lifetime' ? 'Lifetime licence' : `${months} month${months > 1 ? 's' : ''}`;
+    const listUsd = kind === 'lifetime' ? p.usd_lifetime : p.usd_monthly;
+    // what the code takes off: from the order once it exists, otherwise from the preview
+    let off = null;
+    if (o && o.discount_code) off = { code: o.discount_code, inr: o.discount_amount, list: o.list_amount,
+      usd: o.pay && o.pay.card ? o.pay.card.usd : null };
+    else if (!o && code) { off = { code: code.code, inr: code.discount, list: code.list_amount, usd: code.usd, label: code.label }; amount = code.amount; }
+    const totalUsd = off && off.usd != null ? off.usd : listUsd;
+    const discLines = off ? `<div class="line"><span>Price</span><span>${cfg.card_only ? CX.usd(listUsd) : CX.inr(off.list)}</span></div>
+      <div class="line" style="color:var(--ok,#34d399)"><span>Code ${CX.esc(off.code)}${off.label ? ' · ' + CX.esc(off.label) : ''}</span>
+      <span>− ${cfg.card_only ? CX.usd(Math.max(0, listUsd - totalUsd)) : CX.inr(off.inr)}</span></div>` : '';
+    $('title').textContent = `${/^ClavexisAI/.test(p.name) ? p.name : 'ClavexisAI ' + p.name} — ${what}`;
+    $('sumLines').innerHTML = `<div class="line"><span>Plan</span><b>${CX.esc(p.name)}</b></div>
+      <div class="line"><span>Term</span><span>${what}</span></div>
+      <div class="line"><span>Computers</span><span>up to ${p.devices}</span></div>
+      ${o ? `<div class="line"><span>Order</span><span class="mono">${CX.esc(o.ref)}</span></div>` : ''}
+      ${discLines}
+      <div class="line total"><span>Total</span><span>${cfg.card_only ? CX.usd(totalUsd) : CX.inr(amount)}</span></div>`;
+    $('codeBox').classList.toggle('hidden', !!o);   // codes go on before the order is made
+    if (cfg.card_only) $('sumNote').textContent = 'Price in US dollars; sales tax or VAT is added at checkout where it applies.';
+    return true;
+  }
+
+  // ── discount code ──
+  $('codeOpen').addEventListener('click', (e) => { e.preventDefault(); $('codeOpen').classList.add('hidden');
+    $('codeForm').classList.remove('hidden'); $('codeIn').focus(); });
+  async function applyCode() {
+    const c = $('codeIn').value.trim(); $('codeErr').textContent = '';
+    if (!c) { code = null; summarize(null); return; }
+    $('codeApply').disabled = true;
+    try {
+      code = await CX.api('/api/discounts/check', { json: { code: c, plan: want.plan, kind: want.kind, months: want.months } });
+      $('codeIn').value = code.code; $('codeApply').textContent = 'Applied ✓';
+    } catch (err) { code = null; $('codeErr').textContent = err.message; $('codeApply').textContent = 'Apply'; }
+    finally { $('codeApply').disabled = false; summarize(null); }
+  }
+  $('codeApply').addEventListener('click', applyCode);
+  $('codeIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applyCode(); } });
+  $('codeIn').addEventListener('input', () => { if (code) { code = null; $('codeApply').textContent = 'Apply'; summarize(null); } });
+  if (q.get('code')) { $('codeOpen').click(); $('codeIn').value = q.get('code'); applyCode(); }   // links like /checkout?...&code=LAUNCH30
+
+  // ── step 1: account ──
+  let mode = 'register';
+  $('authTabs').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-t]'); if (!b) return; mode = b.dataset.t;
+    $('authTabs').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+    document.querySelectorAll('[data-only="register"]').forEach((el) => el.classList.toggle('hidden', mode !== 'register'));
+    $('authBtn').textContent = mode === 'register' ? 'Create account & continue' : 'Sign in & continue';
+    $('apw').autocomplete = mode === 'register' ? 'new-password' : 'current-password';
+  });
+  $('authForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('authErr').textContent = '';
+    try {
+      const d = await CX.api('/api/auth/' + mode, { json: { email: $('aemail').value, password: $('apw').value, name: $('aname').value } });
+      user = d.user; await CX.chrome(); startEula();
+    } catch (err) { $('authErr').textContent = err.message; }
+  });
+
+  // ── step 2: licence agreement ──
+  async function startEula() {
+    show('stepEula');
+    const [e, b] = await Promise.all([eula || CX.api('/api/legal/eula'), CX.biz()]);
+    eula = e;
+    $('eulaBox').innerHTML = CX.md(eula.text); $('eulaVer').textContent = eula.version;
+    if ($('billState').options.length < 2)
+      $('billState').insertAdjacentHTML('beforeend', (b.states || []).map((s) => `<option>${CX.esc(s)}</option>`).join(''));
+    if (user && user.name) {
+      if (!$('signName').value) $('signName').value = user.name;
+      if (!$('billName').value) $('billName').value = user.name;
+    }
+  }
+  $('isBiz').addEventListener('change', () => {   // with a GSTIN the state comes from the GSTIN
+    $('bizFields').classList.toggle('hidden', !$('isBiz').checked); $('stateField').classList.toggle('hidden', $('isBiz').checked); });
+  $('toPay').addEventListener('click', async () => {
+    $('eulaErr').textContent = '';
+    const biz = $('isBiz').checked;
+    if ($('billName').value.trim().length < 2) { $('eulaErr').textContent = 'Enter the name for your invoice.'; return; }
+    if (!biz && !$('billState').value) { $('eulaErr').textContent = 'Choose your state (needed for the GST on your invoice).'; return; }
+    if (biz && (!$('billCompany').value.trim() || $('billGstin').value.trim().length !== 15)) {
+      $('eulaErr').textContent = 'Enter your business name and 15-character GSTIN, or untick the business box.'; return; }
+    if (!$('agree').checked) { $('eulaErr').textContent = 'Tick the box to agree to the licence agreement.'; return; }
+    if ($('signName').value.trim().length < 3) { $('eulaErr').textContent = 'Type your full name to sign.'; return; }
+    $('toPay').disabled = true;
+    try {
+      order = await CX.api('/api/orders', { json: { ...want, discount_code: code ? code.code : '', eula_accept: true, eula_name: $('signName').value.trim(), eula_version: eula.version,
+        bill_name: $('billName').value.trim(), bill_state: $('billState').value,
+        bill_company: biz ? $('billCompany').value.trim() : '', bill_gstin: biz ? $('billGstin').value.trim() : '' } });
+      history.replaceState(null, '', '/checkout?order=' + order.id);
+      summarize(order);
+      if (order.status === 'paid') waitForApproval(); else startPay();   // a 100% code needs no payment
+    } catch (err) { $('eulaErr').textContent = err.message; }
+    finally { $('toPay').disabled = false; }
+  });
+
+  // ── step 3: payment ──
+  function startPay() {
+    show('stepPay');
+    const pay = order.pay || {};
+    $('payAmount').textContent = cfg.card_only && pay.card ? CX.usd(pay.card.usd) : CX.inr(order.amount);
+    const tabs = [];
+    if (pay.upi) {
+      tabs.push(['upi', 'UPI']);
+      $('qr').innerHTML = pay.upi.qr_svg;
+      $('upiId').innerHTML = `${CX.esc(pay.upi.id)}<button class="copy" data-copy="${CX.esc(pay.upi.id)}">copy</button>`;
+      $('upiName').textContent = pay.upi.payee; $('upiAmt').textContent = CX.inr(order.amount);
+      $('upiNote').innerHTML = `ClavexisAI ${CX.esc(order.ref)}<button class="copy" data-copy="${CX.esc(order.ref)}">copy</button>`;
+      $('upiLink').href = pay.upi.uri;
+    }
+    if (pay.bank) {
+      tabs.push(['bank', 'Bank transfer']);
+      const b = pay.bank, row = (k, v) => v ? `<dt>${k}</dt><dd>${CX.esc(v)}<button class="copy" data-copy="${CX.esc(v)}">copy</button></dd>` : '';
+      $('bankKv').innerHTML = row('Account name', b.account_name) + row('Account no.', b.account_no) + row('IFSC', b.ifsc) + row('Bank', b.bank)
+        + row('Branch', b.branch) + row('Amount', String(order.amount)) + row('Remarks', order.ref);
+    }
+    if (pay.card) {
+      tabs.push(['card', 'Card / PayPal']);
+      $('cardName').textContent = pay.card.name; $('cardAmt').textContent = '$' + pay.card.usd;
+    }
+    $('payTabs').innerHTML = tabs.map(([k, l], i) => `<button data-p="${k}"${i ? '' : ' class="on"'}>${l}</button>`).join('');
+    const pick = (k) => { $('payUpi').classList.toggle('hidden', k !== 'upi'); $('payBank').classList.toggle('hidden', k !== 'bank');
+      $('payCard').classList.toggle('hidden', k !== 'card'); $('utrForm').classList.toggle('hidden', k === 'card');
+      $('payTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.p === k)); $('utrForm').dataset.method = k; };
+    $('payTabs').onclick = (e) => { const b = e.target.closest('[data-p]'); if (b) pick(b.dataset.p); };
+    if (tabs.length) pick(tabs[0][0]);
+  }
+  $('cardGo').addEventListener('click', async () => {
+    $('cardErr').textContent = ''; $('cardGo').disabled = true;
+    try { const r = await CX.api(`/api/orders/${order.id}/pay/card`, { json: {} }); location.href = r.url; }
+    catch (err) { $('cardErr').textContent = err.message; $('cardGo').disabled = false; }
+  });
+  document.addEventListener('click', (e) => { const c = e.target.closest('[data-copy]'); if (c) CX.copy(c.dataset.copy); });
+  $('utrForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('utrErr').textContent = '';
+    try { order = await CX.api(`/api/orders/${order.id}/submit`, { json: { utr: $('utr').value, payer_name: $('payer').value, method: $('utrForm').dataset.method } });
+          waitForApproval(); }
+    catch (err) { $('utrErr').textContent = err.message; }
+  });
+  $('cancelOrder').addEventListener('click', async () => {
+    if (!confirm('Cancel this order?')) return;
+    try { await CX.api(`/api/orders/${order.id}/cancel`, { json: {} }); location.href = '/pricing'; } catch (err) { $('utrErr').textContent = err.message; }
+  });
+
+  // ── step 4: waiting / done ──
+  async function waitForApproval() {
+    show('stepDone');
+    const render = async () => {
+      if (order.status === 'paid') {
+        clearInterval(poll);
+        const all = (await CX.api('/api/licenses')).licenses;
+        const lic = all.find((l) => l.id === order.license_id) || all[0];
+        $('doneTitle').textContent = order.amount ? 'Payment confirmed — here is your licence key' : 'Here is your licence key';
+        $('doneBody').innerHTML = `<p class="lic-key mt">${CX.esc(lic ? lic.key : '')} <button class="copy" data-copy="${CX.esc(lic ? lic.key : '')}">copy</button></p>
+          <ol class="steps mt"><li><a href="/download" style="color:var(--brand)">Download ClavexisAI</a> if you haven't yet.</li>
+          <li>Open ClavexisAI, paste the key when it asks (or <b>Settings &rarr; Account &rarr; Licence</b>) and press <b>Activate</b>.</li></ol>
+          <p class="mt"><a class="btn btn-ghost btn-sm" href="/account">Go to your account</a> ${order.invoice_no ? `<a class="btn btn-ghost btn-sm" href="${CX.apiUrl('/invoice/' + order.id)}" target="_blank">Invoice</a>` : ''}</p>`;
+      } else if (order.status === 'rejected') {
+        clearInterval(poll);
+        $('doneTitle').textContent = "We couldn't confirm this payment";
+        $('doneBody').innerHTML = `<div class="note bad">${CX.esc(order.admin_note || 'Payment not found.')}</div>
+          <p class="muted mt">Email <a href="mailto:contact@clavexis.com?subject=Order ${CX.esc(order.ref)}" style="color:var(--brand)">contact@clavexis.com</a>
+          with a screenshot of your payment and we'll sort it out.</p>`;
+      } else if (order.provider && order.status === 'pending_payment') {
+        $('doneTitle').textContent = 'Confirming your payment…';
+        $('doneBody').innerHTML = `<p class="muted">${CX.esc(order.provider_name)} is confirming your payment — this usually takes
+          a few seconds. Your licence key will appear here and in your email.</p>
+          <p class="dim small mt">Closed the payment window without paying? <a href="/checkout?order=${order.id}" style="color:var(--brand)">Choose another way to pay</a>.</p>`;
+      } else {
+        $('doneTitle').textContent = "Thanks! We're confirming your payment";
+        $('doneBody').innerHTML = `<p class="muted">We'll check that ${CX.inr(order.amount)} (reference <span class="mono">${CX.esc(order.utr || '')}</span>)
+          arrived — usually within a few business hours — then your licence key appears here and in your email.</p>
+          <p class="dim small mt">You can close this page; the key will also be in <a href="/account" style="color:var(--brand)">your account</a>.</p>`;
+      }
+    };
+    await render();
+    clearInterval(poll);
+    poll = setInterval(async () => { try { order = await CX.api('/api/orders/' + order.id); await render(); } catch (e) {} },
+      order.provider ? 4000 : 20000);
+  }
+
+  // ── entry ──
+  if (q.get('order')) {
+    if (!user) { location.href = '/signin?next=' + encodeURIComponent(location.pathname + location.search); return; }
+    try { order = await CX.api('/api/orders/' + q.get('order')); } catch (e) { location.href = '/account'; return; }
+    summarize(order);
+    // back from Paddle / Lemon Squeezy (?paid=1): wait for their confirmation instead of showing the payment options again
+    if (order.status === 'pending_payment' && !(order.provider && q.get('paid'))) startPay(); else waitForApproval();
+    return;
+  }
+  if (!summarize(null)) return;
+  if (user) startEula(); else show('stepAuth');
+})();
+</script>
+</body>
+</html>

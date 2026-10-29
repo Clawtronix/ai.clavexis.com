@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="cx-api" content="https://api.clavexis.com">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your account — ClavexisAI</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/css/base.css"><link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page"><div class="wrap">
+  <div class="page-head row" style="justify-content:space-between;max-width:none">
+    <div><p class="eyebrow">Account</p><h1>Your ClavexisAI</h1><p class="muted" id="who"></p></div>
+    <div class="row"><a class="btn btn-ghost btn-sm" href="/download">Downloads</a><button class="btn btn-ghost btn-sm" id="logout">Sign out</button></div>
+  </div>
+
+  <section class="panel">
+    <h2>Licences</h2>
+    <div id="lics"><p class="muted">Loading…</p></div>
+    <p class="dim small mt">Activate a key in ClavexisAI: paste it when the app asks, or <b>Settings &rarr; Account &rarr; Licence</b>. Moving to a new computer? Remove the old one here first.
+      Keys are personal — see the <a href="/eula" style="color:var(--brand)">licence agreement</a>.</p>
+  </section>
+
+  <section class="panel mt">
+    <h2>Orders</h2>
+    <div class="table-wrap" id="orders"><p class="muted">Loading…</p></div>
+  </section>
+</div></main>
+
+<script src="/js/site.js"></script>
+<script>
+(async function () {
+  const user = await CX.chrome();
+  if (!user) { location.href = '/signin?next=/account'; return; }
+  const $ = (id) => document.getElementById(id);
+  $('who').textContent = (user.name ? user.name + ' · ' : '') + user.email;
+  const STATUS = { pending_payment: 'awaiting payment', submitted: 'checking payment', paid: 'paid', rejected: 'not confirmed', cancelled: 'cancelled' };
+
+  async function load() {
+    const [{ licenses }, { orders }] = await Promise.all([CX.api('/api/licenses'), CX.api('/api/orders')]);
+    $('lics').innerHTML = licenses.length ? licenses.map((l) => `
+      <div class="panel" style="background:var(--bg-elev-2);margin-top:.8rem">
+        <div class="row" style="justify-content:space-between">
+          <div><span class="lic-key">${CX.esc(l.key)}</span><button class="copy" data-copy="${CX.esc(l.key)}">copy</button></div>
+          <span class="status ${l.status}">${l.status}</span></div>
+        <p class="muted small mt">${CX.esc(l.plan_name)} · ${l.kind === 'lifetime' ? 'Lifetime' : 'valid until ' + CX.date(l.expires_at)}
+          · ${l.devices.length} of ${l.max_devices} computers
+          ${l.kind === 'subscription' ? ` · <a href="/checkout?plan=${l.plan}&kind=subscription&months=1" style="color:var(--brand)">renew</a>` : ''}</p>
+        ${l.devices.length ? `<table class="list mt"><tr><th>Computer</th><th>App</th><th>Last seen</th><th></th></tr>${l.devices.map((d) => `
+          <tr><td>${CX.esc(d.name)}</td><td class="dim">${CX.esc(d.app_version || '')}</td><td class="dim">${CX.date(d.last_seen)}</td>
+          <td style="text-align:right"><button class="copy" data-rm="${l.id}/${d.id}">remove</button></td></tr>`).join('')}</table>` : ''}
+      </div>`).join('')
+      : '<p class="muted">No licences yet. <a href="/pricing" style="color:var(--brand)">See plans</a>.</p>';
+
+    $('orders').innerHTML = orders.length ? `<table class="list"><tr><th>Order</th><th>Item</th><th>Amount</th><th>Status</th><th></th></tr>${orders.map((o) => `
+      <tr><td class="mono">${CX.esc(o.ref)}<div class="dim small">${CX.date(o.created)}</div></td><td>${CX.esc(o.label)}</td><td>${o.provider && o.provider_total ? CX.esc(o.provider_total + ' ' + (o.provider_currency || '')) : CX.inr(o.amount)}</td>
+      <td><span class="status ${o.status}">${STATUS[o.status] || o.status}</span>${o.admin_note && o.status === 'rejected' ? `<div class="dim small">${CX.esc(o.admin_note)}</div>` : ''}</td>
+      <td style="text-align:right">${o.status === 'pending_payment' ? `<a class="btn btn-primary btn-sm" href="/checkout?order=${o.id}">Pay</a>`
+        : o.status === 'submitted' ? `<a class="btn btn-ghost btn-sm" href="/checkout?order=${o.id}">Status</a>`
+        : o.status === 'paid' ? `<a class="btn btn-ghost btn-sm" href="${CX.apiUrl('/invoice/' + o.id)}" target="_blank">Invoice</a>` : ''}</td></tr>`).join('')}</table>`
+      : '<p class="muted">No orders yet.</p>';
+  }
+  document.addEventListener('click', async (e) => {
+    const c = e.target.closest('[data-copy]'); if (c) return CX.copy(c.dataset.copy, 'Licence key copied');
+    const r = e.target.closest('[data-rm]');
+    if (r) {
+      if (!confirm('Remove this computer from the licence? ClavexisAI on it will be locked until you activate a key again.')) return;
+      const [lid, aid] = r.dataset.rm.split('/');
+      try { await CX.api(`/api/licenses/${lid}/devices/${aid}/remove`, { json: {} }); CX.toast('Computer removed'); load(); } catch (err) { CX.toast(err.message); }
+    }
+  });
+  $('logout').addEventListener('click', async () => { await CX.api('/api/auth/logout', { json: {} }); location.href = '/'; });
+  load();
+})();
+</script>
+</body>
+</html>

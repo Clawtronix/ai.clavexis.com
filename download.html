@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="cx-api" content="https://api.clavexis.com">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Download ClavexisAI — Windows, macOS, Linux and browser extension</title>
+<meta name="description" content="Download ClavexisAI for Windows, macOS and Linux, and the ClavexisAI browser extension for Chrome and Edge. iPhone and Android coming soon.">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/css/base.css"><link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page"><div class="wrap">
+  <div class="page-head">
+    <p class="eyebrow">Download</p>
+    <h1>Get ClavexisAI</h1>
+    <p class="lede">The whole app runs on your own computer &mdash; its backend and interface both. Download it, then activate
+      it with the licence key from your <a href="/pricing" style="color:var(--brand)">monthly or lifetime licence</a>. <span class="dim" id="ver"></span></p>
+  </div>
+
+  <section class="panel reqs">
+    <h3>What you need</h3>
+    <ul>
+      <li><b>System:</b> Windows 10 or 11 (64-bit), macOS 12 or newer, or a recent 64-bit Linux.</li>
+      <li><b>Memory:</b> 8 GB works with the small local models; 16 GB is comfortable. No graphics card needed.</li>
+      <li><b>Disk:</b> about 2 GB for the app, plus 2&ndash;10 GB for the local models you choose
+        (chat model about 2 GB, photo reader 0.6 GB, &ldquo;Look closer&rdquo; 3.3 GB, local picture maker 2.5 GB).</li>
+      <li><b>Local AI:</b> the free <a href="https://ollama.com/download" target="_blank" rel="noopener">Ollama</a> app &mdash;
+        ClavexisAI walks you through it. Or skip it and use your own cloud AI key.</li>
+      <li><b>Internet:</b> only to download, activate, and for web research, email, calendars or cloud models.</li>
+    </ul>
+  </section>
+
+  <div class="os-grid" id="osGrid">
+    <!-- Windows -->
+    <section class="os" data-os="windows">
+      <div class="os-top"><div class="os-ico">⊞</div><div><h3>Windows</h3><div class="dim small">Windows 10 or 11, 64-bit</div></div></div>
+      <a class="btn btn-primary btn-block hidden" data-file="windows_setup" href="#">Download installer for Windows</a>
+      <div class="meta hidden" data-meta="windows_setup"></div>
+      <ol class="steps hidden" id="winSetupSteps">
+        <li>Run <b>ClavexisAI-…-windows-setup.exe</b>. If Windows shows “Windows protected your PC”, click <b>More info → Run anyway</b>
+          (the installer isn't code-signed yet).</li>
+        <li>Click <b>Next → Install</b>. No Python or administrator password needed.</li>
+        <li>ClavexisAI opens straight away, with nothing extra to download &mdash; create your account; the first account on a computer is its owner.</li>
+      </ol>
+      <a class="btn btn-primary btn-block" data-file="windows" href="#">Download for Windows</a>
+      <div class="meta" data-meta="windows"></div>
+      <ol class="steps" id="winZipSteps">
+        <li>Install <b>Python 3.12</b> from <a href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener">python.org</a>
+          &mdash; tick <b>“Add python.exe to PATH”</b> on the first screen.</li>
+        <li><b>Unzip</b> the download, e.g. to <code>Documents\ClavexisAI</code>.</li>
+        <li>Double-click <b>ClavexisAI.bat</b>. The first start installs what it needs (about 5&ndash;10 minutes) and adds a <b>ClavexisAI</b> shortcut to your Desktop and Start menu &mdash; use that from then on; it opens in seconds.</li>
+        <li>Create your account in the window that opens &mdash; the first account on a computer is its owner.</li>
+      </ol>
+    </section>
+
+    <!-- macOS -->
+    <section class="os" data-os="macos">
+      <div class="os-top"><div class="os-ico">⌘</div><div><h3>macOS</h3><div class="dim small">macOS 12 or newer, Apple silicon or Intel</div></div></div>
+      <a class="btn btn-primary btn-block" data-file="macos" href="#">Download for macOS</a>
+      <div class="meta" data-meta="macos"></div>
+      <ol class="steps">
+        <li>Install <b>Python 3.12</b> from <a href="https://www.python.org/downloads/macos/" target="_blank" rel="noopener">python.org</a>
+          (or <code>brew install python@3.12</code>).</li>
+        <li>Open <b>Terminal</b> in your Downloads folder and unpack it:
+          <code class="cmd">tar -xzf ClavexisAI-*-macos.tar.gz && cd ClavexisAI</code></li>
+        <li>Start it: <code class="cmd">./clavexisai.sh</code> The first start installs what it needs (5&ndash;10 minutes).</li>
+        <li>Optional: <code class="cmd">./clavexisai.sh --install</code> adds ClavexisAI to your Applications folder.</li>
+      </ol>
+    </section>
+
+    <!-- Linux -->
+    <section class="os" data-os="linux">
+      <div class="os-top"><div class="os-ico">🐧</div><div><h3>Linux</h3><div class="dim small">Ubuntu 22.04+, Debian 12+, Fedora 39+ (x86-64)</div></div></div>
+      <a class="btn btn-primary btn-block" data-file="linux" href="#">Download for Linux</a>
+      <div class="meta" data-meta="linux"></div>
+      <ol class="steps">
+        <li>Install Python and its virtual-env module:
+          <code class="cmd">sudo apt install python3 python3-venv python3-pip</code>
+          <span class="dim small">(Fedora: <code>sudo dnf install python3 python3-pip</code>)</span></li>
+        <li>Unpack and start: <code class="cmd">tar -xzf ClavexisAI-*-linux.tar.gz && cd ClavexisAI
+./clavexisai.sh</code></li>
+        <li>Optional: <code class="cmd">./clavexisai.sh --install</code> adds it to your applications menu.</li>
+      </ol>
+    </section>
+  </div>
+
+  <div class="note mt">ClavexisAI needs a licence key: <a href="/pricing" style="color:var(--brand)">buy one</a>, then open ClavexisAI, paste the key when it asks and press <b>Activate</b>.
+    Your key is in <a href="/account">your account</a> and in the email we send.</div>
+
+  <!-- Local AI -->
+  <section class="panel mt2" id="local-ai">
+    <h2>Free, private AI on your own computer (recommended)</h2>
+    <p class="muted">ClavexisAI works with no API key by running an AI model on your computer through Ollama. Nothing you type leaves it.</p>
+    <ol class="steps mt">
+      <li>Install <b>Ollama</b> from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a>.</li>
+      <li>Download the fast everyday model (about 2 GB): <code class="cmd">ollama pull llama3.2:3b</code></li>
+      <li>Optional, for harder tasks if you have 16 GB of memory (about 4.7 GB): <code class="cmd">ollama pull qwen2.5:7b</code></li>
+      <li>That's it &mdash; ClavexisAI starts Ollama by itself and picks the right model for each job.</li>
+    </ol>
+    <p class="dim small mt">Recommended computer: 16 GB of memory and 10 GB free disk. 8 GB works with the small model.</p>
+  </section>
+
+  <!-- Browser extension -->
+  <section class="panel mt2" id="extension">
+    <div class="row" style="justify-content:space-between">
+      <div><h2>ClavexisAI browser extension</h2>
+        <p class="muted">Your assistant beside every web page &mdash; summarize pages, ask about what you're reading, and right-click any text
+          to explain, translate, improve it or save it to ClavexisAI. Works with Chrome, Edge, Brave and Opera.</p></div>
+      <a class="btn btn-primary" data-file="extension" href="#">Download extension</a>
+    </div>
+    <div class="meta dim small" data-meta="extension"></div>
+    <ol class="steps mt">
+      <li>Download and <b>unzip</b> the extension to a folder you'll keep (e.g. <code>Documents\ClavexisAI-extension</code>).</li>
+      <li>Open <code>chrome://extensions</code> &mdash; in Edge <code>edge://extensions</code> &mdash; and switch on <b>Developer mode</b>.</li>
+      <li>Click <b>Load unpacked</b> and choose the unzipped folder.</li>
+      <li>Start the ClavexisAI app, then sign in on the page the extension opens (same username and password as the app).</li>
+      <li>Pin the ClavexisAI icon. Shortcuts: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> opens it,
+        <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> summarizes the page.</li>
+    </ol>
+    <p class="dim small mt">Chrome Web Store and Edge Add-ons listings and a Firefox version are coming soon.</p>
+  </section>
+
+  <!-- Mobile -->
+  <section class="mt2" id="mobile">
+    <div class="sec-head" style="margin-bottom:1.2rem"><h2 style="font-size:1.6rem">On your phone</h2></div>
+    <div class="os-grid">
+      <section class="os soon"><div class="os-top"><div class="os-ico">📱</div><div><h3>iPhone &amp; iPad</h3><div class="dim small">App Store</div></div>
+        <span class="soon-pill">Coming soon</span></div>
+        <p class="muted small">Your ClavexisAI on the go, synced with your computer.</p></section>
+      <section class="os soon"><div class="os-top"><div class="os-ico">🤖</div><div><h3>Android</h3><div class="dim small">Google Play</div></div>
+        <span class="soon-pill">Coming soon</span></div>
+        <p class="muted small">Chat, voice and your workspaces from any Android phone.</p></section>
+      <section class="os"><h3>Tell me when it's out</h3>
+        <form id="notify" class="stack" style="gap:.6rem">
+          <input class="input" type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+          <select class="input" name="platform"><option value="ios">iPhone / iPad</option><option value="android">Android</option><option value="both">Both</option></select>
+          <button class="btn btn-primary" type="submit">Notify me</button>
+          <p class="err" id="notifyMsg" role="status"></p>
+        </form></section>
+    </div>
+  </section>
+
+  <details class="more mt2">
+    <summary>Check that your download is genuine (SHA-256)</summary>
+    <p class="muted small">Compare the checksum shown under each download with:</p>
+    <code class="cmd">Windows:  certutil -hashfile ClavexisAI-*-windows.zip SHA256
+macOS / Linux:  shasum -a 256 ClavexisAI-*.tar.gz</code>
+    <p class="dim small mt">By downloading or using ClavexisAI you agree to the <a href="/eula">licence agreement</a>. It may not be republished or shared.</p>
+  </details>
+</div></main>
+
+<script src="/js/site.js"></script>
+<script>
+(async function () {
+  await CX.chrome();
+  const me = CX.os();
+  const card = document.querySelector(`[data-os="${me}"]`);
+  if (card) { card.classList.add('me'); card.parentNode.prepend(card); }
+  let d = { files: {} };
+  try { d = await CX.api('/api/downloads'); } catch (e) {}
+  if (d.version) document.getElementById('ver').textContent = 'Current version: ' + d.version + (d.released ? ' · released ' + d.released : '');
+  // Windows: when the installer exists it is the main download; the zip becomes the portable option
+  if (d.files.windows_setup) {
+    ['[data-file="windows_setup"]', '[data-meta="windows_setup"]', '#winSetupSteps'].forEach((s) => document.querySelector(s).classList.remove('hidden'));
+    const zip = document.querySelector('[data-file="windows"]');
+    zip.classList.replace('btn-primary', 'btn-ghost'); zip.classList.add('btn-sm');
+    zip.textContent = 'Portable .zip instead (needs Python 3.12)';
+    document.getElementById('winZipSteps').classList.add('hidden');
+    zip.addEventListener('click', () => document.getElementById('winZipSteps').classList.remove('hidden'));
+  } else {
+    document.querySelector('[data-file="windows_setup"]').remove();
+  }
+  document.querySelectorAll('[data-file]').forEach((a) => {
+    const f = d.files[a.dataset.file];
+    const meta = document.querySelector(`[data-meta="${a.dataset.file}"]`);
+    if (f) {
+      a.href = f.url;
+      if (meta) meta.innerHTML = `${CX.esc(f.file)} · ${(f.size / 1048576).toFixed(1)} MB<br>SHA-256 ${CX.esc(f.sha256)}`;
+    } else {
+      a.removeAttribute('href'); a.setAttribute('aria-disabled', 'true'); a.classList.add('btn-ghost'); a.classList.remove('btn-primary');
+      a.textContent = 'Not available yet'; a.style.pointerEvents = 'none';
+    }
+  });
+  if (location.hash) { const t = document.querySelector(location.hash); if (t) setTimeout(() => t.scrollIntoView(), 50); }
+  document.getElementById('notify').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target, msg = document.getElementById('notifyMsg');
+    try { await CX.api('/api/notify', { json: { email: f.email.value, platform: f.platform.value } });
+          msg.style.color = 'var(--brand)'; msg.textContent = "Done — we'll email you once, when it launches."; f.reset(); }
+    catch (err) { msg.style.color = ''; msg.textContent = err.message; }
+  });
+})();
+</script>
+</body>
+</html>

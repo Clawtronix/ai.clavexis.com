@@ -1,0 +1,12 @@
+{
+  "name": "ClavexisAI",
+  "short_name": "ClavexisAI",
+  "description": "Every AI tool you pay for, in one app on your own computer.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#0a0e14",
+  "theme_color": "#0a0e14",
+  "icons": [
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

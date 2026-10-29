@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="cx-api" content="https://api.clavexis.com">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Secure checkout — ClavexisAI</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="/css/base.css"><link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<!-- Paddle's "default payment link" (Paddle → Checkout → Checkout settings): Paddle sends buyers here
+     with ?_ptxn=txn_…, and Paddle.js opens the checkout for that transaction. -->
+<main class="page"><div class="wrap">
+  <div class="page-head"><p class="eyebrow">Checkout</p><h1>Opening secure checkout…</h1>
+    <p class="lede" id="msg">The payment window is provided by Paddle, our reseller. If nothing appears, allow pop-ups and reload.</p>
+    <p class="mt"><a class="btn btn-ghost btn-sm" id="back" href="/account">Back to your order</a></p></div>
+</div></main>
+<script src="/js/site.js"></script>
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script>
+(async function () {
+  CX.chrome();
+  const q = new URLSearchParams(location.search);
+  const order = q.get('order');
+  const back = order ? `/checkout?order=${encodeURIComponent(order)}` : '/account';
+  document.getElementById('back').href = back;
+  try {
+    const cfg = await CX.api('/api/pay/paddle-config');
+    if (!cfg.token) throw new Error('not configured');
+    if (cfg.environment === 'sandbox') Paddle.Environment.set('sandbox');
+    Paddle.Initialize({
+      token: cfg.token,
+      eventCallback: (ev) => {
+        if (ev.name === 'checkout.completed') location.href = order ? back + '&paid=1' : '/account';
+        else if (ev.name === 'checkout.closed') location.href = back;
+      },
+    });
+    // Paddle.js opens the checkout by itself when the URL has _ptxn; this covers older links.
+    if (!q.get('_ptxn') && q.get('txn')) Paddle.Checkout.open({ transactionId: q.get('txn') });
+    if (!q.get('_ptxn') && !q.get('txn')) document.getElementById('msg').textContent = 'This link has no payment attached. Go back to your order.';
+  } catch (e) {
+    document.getElementById('msg').textContent = 'Card payment is not available right now — please try again in a few minutes, or write to us.';
+  }
+})();
+</script>
+</body>
+</html>

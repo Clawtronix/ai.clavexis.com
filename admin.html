@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="cx-api" content="https://api.clavexis.com">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — ClavexisAI</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="/css/base.css"><link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page"><div class="wrap">
+  <div class="page-head"><p class="eyebrow">Admin</p><h1>Store</h1></div>
+  <div class="adm-stats" id="stats"></div>
+  <div id="setup" class="mt"></div>
+
+  <section class="panel mt"><h2>Health</h2>
+    <div id="health">Loading…</div>
+    <p class="mt"><button class="btn btn-ghost btn-sm" id="hRefresh">Re-check</button>
+      <button class="btn btn-ghost btn-sm" id="testAlert">Send test alert</button>
+      <button class="btn btn-ghost btn-sm" id="digPreview">Preview daily summary</button>
+      <button class="btn btn-ghost btn-sm" id="digSend">Send daily summary now</button></p>
+    <pre id="digest" class="small hidden" style="white-space:pre-wrap;margin-top:1rem"></pre>
+  </section>
+
+  <section class="panel mt"><h2>Money</h2><div class="table-wrap" id="money">Loading…</div>
+    <h3 class="mt">Last 30 days</h3><div class="table-wrap" id="daily"></div>
+    <h3 class="mt">Last 12 months</h3><div class="table-wrap" id="monthly"></div></section>
+
+  <section class="panel mt"><h2>Free trials (switched off)</h2><div id="trials">Loading…</div>
+    <p class="mt"><button class="btn btn-ghost btn-sm" id="trialMail">Send due trial emails now</button></p></section>
+
+  <section class="panel mt"><h2>Discount codes</h2>
+    <form id="codeForm" class="row" style="gap:.6rem;align-items:flex-end">
+      <div class="field"><label for="cCode">Code</label><input class="input mono" id="cCode" maxlength="32" placeholder="LAUNCH30" style="text-transform:uppercase"></div>
+      <div class="field"><label for="cKind">Type</label><select class="input" id="cKind"><option value="percent">% off</option><option value="amount">₹ off</option></select></div>
+      <div class="field"><label for="cValue">Value</label><input class="input" id="cValue" type="number" min="1" step="any" style="width:7rem"></div>
+      <div class="field"><label for="cUsd">$ off (card, ₹ codes)</label><input class="input" id="cUsd" type="number" min="0" step="any" style="width:7rem"></div>
+      <div class="field"><label for="cApplies">For</label><select class="input" id="cApplies"><option value="any">Both</option>
+        <option value="lifetime">Lifetime</option><option value="subscription">Monthly</option></select></div>
+      <div class="field"><label for="cMax">Max uses</label><input class="input" id="cMax" type="number" min="1" placeholder="no limit" style="width:7rem"></div>
+      <div class="field"><label for="cExp">Last day</label><input class="input" id="cExp" type="date"></div>
+      <div class="field"><label for="cPaddle">Paddle discount id</label><input class="input mono" id="cPaddle" placeholder="dsc_…"></div>
+      <div class="field" style="flex:1;min-width:160px"><label for="cNote">Note</label><input class="input" id="cNote" placeholder="e.g. YouTube reviewer"></div>
+      <button class="btn btn-primary btn-sm">Create</button></form>
+    <p class="dim small mt">Card payments: create the same code in Paddle (Catalog → Discounts; paste its id here) or Lemon Squeezy
+      (Store → Discounts, same code). A 100% code gives the licence straight away with no payment.</p>
+    <div class="table-wrap mt" id="codes"></div></section>
+
+  <section class="panel mt"><h2>Find a customer</h2>
+    <form id="findForm" class="row" style="gap:.6rem"><input class="input" id="findQ" style="flex:1;min-width:220px"
+      placeholder="email, name, order CX…, UTR, licence key, GSTIN"><button class="btn btn-primary btn-sm">Search</button></form>
+    <div id="found" class="mt"></div></section>
+
+  <section class="panel mt"><h2>Export for your accountant</h2>
+    <form id="expForm" class="row" style="gap:.6rem;align-items:flex-end">
+      <div class="field"><label for="expFrom">From</label><input class="input" type="date" id="expFrom"></div>
+      <div class="field"><label for="expTo">To</label><input class="input" type="date" id="expTo"></div>
+      <div class="field"><label for="expStatus">Orders</label><select class="input" id="expStatus">
+        <option value="paid">Paid</option><option value="refunded">Refunded</option><option value="all">All</option></select></div>
+      <button class="btn btn-primary btn-sm">Download CSV</button></form>
+    <p class="dim small mt">Opens in Excel / Google Sheets. Indian financial year: 1 April – 31 March.</p></section>
+
+  <section class="panel mt">
+    <div class="row" style="justify-content:space-between"><h2 style="margin:0">Orders</h2>
+      <div class="seg" id="filter"><button data-f="submitted" class="on">To verify</button><button data-f="pending_payment">Unpaid</button>
+        <button data-f="paid">Paid</button><button data-f="all">All</button></div></div>
+    <div class="table-wrap mt" id="orders"></div>
+  </section>
+
+  <section class="panel mt"><h2>Licences</h2><div class="table-wrap" id="lics"></div></section>
+  <section class="panel mt"><h2>Early access list and phone-app waitlist</h2><div class="table-wrap" id="wait"></div></section>
+</div></main>
+<script src="/js/site.js"></script>
+<script>
+(async function () {
+  const user = await CX.chrome();
+  const $ = (id) => document.getElementById(id);
+  if (!user || !user.admin) { document.querySelector('.page .wrap').innerHTML = '<h1>Admins only</h1><p class="muted mt">Sign in with an address listed in ADMIN_EMAILS.</p>'; return; }
+  let data = null, filter = 'submitted';
+
+  async function load() {
+    data = await CX.api('/api/admin/overview');
+    const s = data.stats;
+    $('stats').innerHTML = [['To verify', s.to_verify], ['UPI/bank revenue', CX.inr(s.revenue)], ['Active licences', s.active_licenses],
+      ['Customers', s.users], ['Downloads', s.downloads], ['Early access + waitlist', s.waitlist]]
+      .map(([k, v]) => `<div class="adm-stat"><b>${v}</b><span>${k}</span></div>`).join('');
+    const st = data.setup, item = (ok, text) => `<li>${ok ? '✅' : '⚠️'} ${text}</li>`;
+    const missing = !(st.upi || st.bank || st.card) || !st.smtp || !st.releases || !st.https || !st.business || !st.grievance;
+    $('setup').innerHTML = missing ? `<div class="note warn"><b>Setup</b><ul style="margin:.4rem 0 0 1rem;padding:0">
+      ${item(st.upi || st.bank || st.card, 'Payment details (UPI_ID, BANK_ACCOUNT_NO and/or Paddle / Lemon Squeezy in .env) — buyers can\'t pay without them')}
+      ${item(st.business, 'Business details (BUSINESS_LEGAL_NAME, COMPANY_ADDRESS) — shown on invoices, legal pages and the Contact page')}
+      ${item(st.grievance, 'Grievance officer (GRIEVANCE_OFFICER) — required for online sellers in India')}
+      ${item(st.gst, 'GSTIN — only once you are GST-registered; invoices then become GST tax invoices')}
+      ${item(st.smtp, 'Email (SMTP_HOST, SMTP_PASSWORD) — to email licence keys; keys still show in accounts without it')}
+      ${item(st.releases, 'Downloads (run tools/build_release.py)')}
+      ${item(st.https, 'HTTPS (SITE_URL=https://ai.clavexis.com once deployed)')}</ul></div>` : '';
+    renderOrders(); renderLics();
+    $('wait').innerHTML = data.waitlist.length ? `<table class="list"><tr><th>Email</th><th>Platform</th><th>Since</th></tr>${data.waitlist.map((w) =>
+      `<tr><td>${CX.esc(w.email)}</td><td>${CX.esc(w.platform)}</td><td class="dim">${CX.date(w.created)}</td></tr>`).join('')}</table>` : '<p class="muted">Nobody yet.</p>';
+  }
+  function renderOrders() {
+    const rows = data.orders.filter((o) => filter === 'all' || o.status === filter);
+    $('orders').innerHTML = rows.length ? `<table class="list"><tr><th>Order</th><th>Customer</th><th>Item</th><th>Amount</th><th>Payment</th><th>EULA</th><th>Status</th><th></th></tr>
+      ${rows.map((o) => `<tr><td class="mono">${CX.esc(o.ref)}<div class="dim small">${CX.date(o.created)}</div></td>
+        <td>${CX.esc(o.email)}<div class="dim small">${CX.esc(o.bill_company || o.bill_name || '')}${o.bill_gstin ? ' · GSTIN ' + CX.esc(o.bill_gstin) : ''}${o.bill_state ? ' · ' + CX.esc(o.bill_state) : ''}</div></td>
+        <td>${CX.esc(o.label)}${o.invoice_no ? `<div class="dim small"><a href="${CX.apiUrl('/invoice/' + o.id)}" target="_blank" style="color:inherit">${CX.esc(o.invoice_no)}</a></div>` : ''}</td><td><b>${CX.inr(o.amount)}</b></td>
+        <td>${o.utr ? `${CX.esc((o.method || '').toUpperCase())} <span class="mono">${CX.esc(o.utr)}</span><div class="dim small">${CX.esc(o.payer_name || '')}</div>` : o.provider ? `${CX.esc(o.provider_name)}<div class="dim small">${CX.esc((o.provider_total || '') + ' ' + (o.provider_currency || ''))}</div>` : '<span class="dim">—</span>'}</td>
+        <td class="small">${CX.esc(o.eula_signed_name || '')}<div class="dim">v${CX.esc(o.eula_version || '')} · ${CX.date(o.eula_at)} · ${CX.esc(o.eula_ip || '')}</div></td>
+        <td><span class="status ${o.status}">${o.status.replace('_', ' ')}</span></td>
+        <td style="white-space:nowrap">${o.status === 'submitted' || o.status === 'pending_payment'
+          ? `<button class="btn btn-primary btn-sm" data-ok="${o.id}">Approve</button> <button class="btn btn-ghost btn-sm" data-no="${o.id}">Reject</button>` : ''}</td></tr>`).join('')}</table>`
+      : '<p class="muted">Nothing here.</p>';
+  }
+  function renderLics() {
+    $('lics').innerHTML = data.licenses.length ? `<table class="list"><tr><th>Key</th><th>Customer</th><th>Plan</th><th>Expires</th><th>Computers</th><th>Status</th><th></th></tr>
+      ${data.licenses.map((l) => `<tr><td class="mono small">${CX.esc(l.key)}</td><td>${CX.esc(l.email)}</td><td>${CX.esc(l.plan_name)}</td>
+        <td>${l.kind === 'lifetime' ? 'Lifetime' : CX.date(l.expires_at)}</td>
+        <td title="${CX.esc(l.devices.map((d) => d.name).join(', '))}">${l.devices.length} / ${l.max_devices}</td>
+        <td><span class="status ${l.status}">${l.status}</span></td>
+        <td>${l.status === 'revoked' ? `<button class="btn btn-ghost btn-sm" data-restore="${l.id}">Restore</button>` : `<button class="btn btn-ghost btn-sm" data-revoke="${l.id}">Revoke</button>`}</td></tr>`).join('')}</table>`
+      : '<p class="muted">No licences yet.</p>';
+  }
+  $('filter').addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; filter = b.dataset.f;
+    $('filter').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); renderOrders(); });
+  document.addEventListener('click', async (e) => {
+    const t = e.target.closest('[data-ok],[data-no],[data-revoke],[data-restore]'); if (!t) return;
+    const o = data.orders.find((x) => String(x.id) === (t.dataset.ok || t.dataset.no));
+    try {
+      if (t.dataset.ok) {
+        if (!confirm(`Did ${CX.inr(o.amount)} actually arrive in your account${o.utr ? ' with reference ' + o.utr : ''}?\n\nApproving issues the licence key.`)) return;
+        await CX.api(`/api/admin/orders/${o.id}/approve`, { json: { note: '' } }); CX.toast('Approved — licence issued');
+      } else if (t.dataset.no) {
+        const note = prompt('Why? (shown to the customer)', 'We could not find this payment in our account.'); if (note === null) return;
+        await CX.api(`/api/admin/orders/${o.id}/reject`, { json: { note } }); CX.toast('Rejected');
+      } else if (t.dataset.revoke) {
+        const note = prompt('Reason for revoking (internal):', 'Licence agreement breach'); if (note === null) return;
+        await CX.api(`/api/admin/licenses/${t.dataset.revoke}/revoke`, { json: { note } }); CX.toast('Revoked');
+      } else {
+        await CX.api(`/api/admin/licenses/${t.dataset.restore}/restore`, { json: {} }); CX.toast('Restored');
+      }
+      load();
+    } catch (err) { CX.toast(err.message); }
+  });
+  load();
+})();
+</script>
+<script>
+(async function () {
+  const user = await CX.me();
+  if (!user || !user.admin) return;
+  const $ = (id) => document.getElementById(id), e = CX.esc;
+  const mark = (ok) => ok === true ? '✅' : ok === false ? '❌' : '➖';
+  const money = (m) => Object.entries(m.by_currency).map(([c, v]) => `${c} ${Number(v).toLocaleString('en-IN')}`).join(' + ') || '0';
+
+  async function health() {
+    $('health').textContent = 'Checking…';
+    const h = await CX.api('/api/admin/health');
+    $('health').innerHTML = `<p><b>${h.ok ? 'All good' : 'Needs attention'}</b> · up ${h.uptime_h} h ·
+      card payments: ${e(h.payments.active || 'off')} (choice: ${e(h.payments.choice)}; Paddle ${h.payments.paddle ? 'ready' : 'not set'},
+      Lemon Squeezy ${h.payments.lemonsqueezy ? 'ready' : 'not set'})</p>
+      <table class="list">${h.checks.map((c) => `<tr><td>${mark(c.ok)}</td><td>${e(c.name)}</td><td class="dim">${e(c.detail)}</td></tr>`).join('')}</table>`;
+  }
+  async function report() {
+    const r = await CX.api('/api/admin/report');
+    const row = (k, m) => `<tr><td>${k}</td><td>${m.sales}</td><td>${e(money(m))}</td></tr>`;
+    $('money').innerHTML = `<table class="list"><tr><th>Period</th><th>Sales</th><th>Revenue</th></tr>
+      ${row('Today', r.today)}${row('Yesterday', r.yesterday)}${row('Last 7 days', r.last_7_days)}${row('This month', r.this_month)}${row('All time', r.all_time)}</table>
+      <p class="small mt">Lifetime sold: ${r.lifetime_sold} · monthly sold: ${r.monthly_sold} · refunds: ${r.refunds} ·
+      to verify: ${r.to_verify}${r.oldest_waiting_h ? ` (oldest ${r.oldest_waiting_h} h)` : ''} · customers: ${r.users} ·
+      active licences: ${r.active_licenses} · monthly ending in 7 days: ${r.expiring_7d} · computers active (7 d): ${r.computers_active_7d} ·
+      downloads (7 d): ${r.downloads_7d} · unpaid card checkouts (7 d): ${r.abandoned_card_checkouts_7d}</p>`;
+    const conv = r.trials_total ? Math.round(100 * r.trials_converted / r.trials_total) : 0;
+    $('trials').innerHTML = `<div class="adm-stats">${[['Active now', r.trials_active], ['Started (7 d)', r.trials_7d],
+      ['Started (all)', r.trials_total], ['Became customers', r.trials_converted + ' (' + conv + '%)']]
+      .map(([k, v]) => `<div class="adm-stat"><b>${v}</b><span>${k}</span></div>`).join('')}</div>`;
+    $('daily').innerHTML = `<table class="list"><tr><th>Day</th><th>Sales</th><th>Revenue</th><th>New accounts</th></tr>
+      ${r.daily.slice().reverse().map((d) => `<tr><td>${d.date}</td><td>${d.sales}</td><td>${e(money(d))}</td><td>${d.new_users}</td></tr>`).join('')}</table>`;
+    $('monthly').innerHTML = `<table class="list"><tr><th>Month</th><th>Sales</th><th>Revenue</th></tr>
+      ${r.monthly.map((m) => `<tr><td>${m.month}</td><td>${m.sales}</td><td>${e(money(m))}</td></tr>`).join('')}</table>`;
+  }
+  async function codes() {
+    const r = await CX.api('/api/admin/codes');
+    $('codes').innerHTML = r.codes.length ? `<table class="list"><tr><th>Code</th><th>Discount</th><th>For</th><th>Used</th><th>Last day</th><th>Note</th><th></th></tr>
+      ${r.codes.map((c) => `<tr><td class="mono">${e(c.code)}</td>
+        <td>${c.kind === 'percent' ? c.value + '%' : '₹' + c.value}${c.usd_value ? ' / $' + c.usd_value : ''}${c.paddle_discount_id ? '<div class="dim small">' + e(c.paddle_discount_id) + '</div>' : ''}</td>
+        <td>${{ any: 'Both', lifetime: 'Lifetime', subscription: 'Monthly' }[c.applies]}</td>
+        <td>${c.used}${c.max_uses != null ? ' / ' + c.max_uses : ''}</td>
+        <td>${c.expires ? CX.date(c.expires - 1) : '—'}</td><td class="small">${e(c.note || '')}</td>
+        <td><button class="btn btn-ghost btn-sm" data-code="${e(c.code)}">${c.active ? 'Turn off' : 'Turn on'}</button></td></tr>`).join('')}</table>`
+      : '<p class="muted">No codes yet.</p>';
+  }
+  $('codeForm').onsubmit = async (ev) => {
+    ev.preventDefault();
+    try {
+      await CX.api('/api/admin/codes', { json: { code: $('cCode').value, kind: $('cKind').value, value: $('cValue').value,
+        usd_value: $('cUsd').value, applies: $('cApplies').value, max_uses: $('cMax').value, expires: $('cExp').value,
+        paddle_discount_id: $('cPaddle').value, note: $('cNote').value } });
+      CX.toast('Code created'); $('codeForm').reset(); codes();
+    } catch (err) { CX.toast(err.message); }
+  };
+  $('codes').addEventListener('click', async (ev) => {
+    const b = ev.target.closest('[data-code]'); if (!b) return;
+    await CX.api(`/api/admin/codes/${encodeURIComponent(b.dataset.code)}/toggle`, { json: {} }); codes();
+  });
+  $('trialMail').onclick = async () => { const r = await CX.api('/api/admin/trials/mail-now', { json: {} });
+    CX.toast(`Reminders sent: ${r.reminded} · trial-ended emails: ${r.ended}`); };
+  $('hRefresh').onclick = health;
+  $('testAlert').onclick = async () => {
+    const r = await CX.api('/api/admin/alerts/test', { json: {} });
+    CX.toast(`Email ${r.email_configured ? 'sent to ' + r.email_to.join(', ') : 'NOT configured'} · Telegram ${r.telegram ? (r.telegram_sent ? 'sent' : 'failed: ' + r.telegram_error) : 'not set up'}`);
+  };
+  $('digPreview').onclick = async () => { const d = await CX.api('/api/admin/digest'); $('digest').textContent = d.subject + '\n\n' + d.text; $('digest').classList.remove('hidden'); };
+  $('digSend').onclick = async () => { const d = await CX.api('/api/admin/digest/send', { json: {} }); CX.toast('Sent: ' + d.subject); };
+
+  $('findForm').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const r = await CX.api('/api/admin/customers?q=' + encodeURIComponent($('findQ').value));
+    $('found').innerHTML = r.customers.length ? r.customers.map((c) => `<div class="panel mt">
+      <b>${e(c.email)}</b> ${e(c.name || '')} <span class="dim small">customer since ${CX.date(c.since)}</span>
+      <table class="list mt"><tr><th>Order</th><th>Item</th><th>Status</th><th>Paid</th><th>Payment</th><th></th></tr>
+      ${c.orders.map((o) => `<tr><td class="mono">${e(o.ref)}</td><td>${e(o.label)}</td><td>${e(o.status)}</td>
+        <td>${o.provider ? e((o.provider_total || '') + ' ' + (o.provider_currency || '')) : '₹' + o.amount}</td>
+        <td>${e(o.provider_name || (o.method || '').toUpperCase())} ${e(o.utr || '')}</td>
+        <td>${o.status === 'paid' ? `<a href="${CX.apiUrl('/invoice/' + o.id)}" target="_blank">invoice</a>` : ''}
+          ${o.provider ? '' : `<button class="btn btn-ghost btn-sm" data-bill="${o.id}" data-name="${e(o.bill_name || '')}"
+            data-company="${e(o.bill_company || '')}" data-gstin="${e(o.bill_gstin || '')}" data-state="${e(o.bill_state || '')}">Edit billing</button>`}</td></tr>`).join('')}</table>
+      <table class="list mt"><tr><th>Licence</th><th>Kind</th><th>Status</th><th>Expires</th><th>Computers</th><th></th></tr>
+      ${c.licenses.map((l) => `<tr><td class="mono small">${e(l.key)}</td><td>${e(l.kind)}</td><td>${e(l.status)}</td>
+        <td>${l.expires_at ? CX.date(l.expires_at) : 'never'}</td><td>${l.devices.map((d) => e(d.name) + ' (' + CX.date(d.last_seen) + ')').join(', ') || '—'}</td>
+        <td><button class="btn btn-ghost btn-sm" data-resend="${l.id}">Email key again</button></td></tr>`).join('')}</table></div>`).join('')
+      : '<p class="muted">No match.</p>';
+  };
+  document.addEventListener('click', async (ev) => {
+    const eb = ev.target.closest('[data-bill]');
+    if (eb) {
+      const company = prompt('Business name (empty for a person):', eb.dataset.company); if (company === null) return;
+      const gstin = company ? prompt('GSTIN (15 characters):', eb.dataset.gstin) : ''; if (gstin === null) return;
+      const name = prompt('Name on the invoice:', eb.dataset.name); if (name === null) return;
+      const state = gstin ? '' : prompt('State (as in the checkout list, or "Outside India"):', eb.dataset.state); if (state === null) return;
+      try { await CX.api(`/api/admin/orders/${eb.dataset.bill}/billing`, { json: { bill_company: company, bill_gstin: gstin, bill_name: name, bill_state: state } });
+            CX.toast('Billing updated — the invoice now shows it'); $('findForm').requestSubmit(); }
+      catch (err) { CX.toast(err.message); }
+      return;
+    }
+    const b = ev.target.closest('[data-resend]'); if (!b) return;
+    const r = await CX.api(`/api/admin/licenses/${b.dataset.resend}/resend`, { json: {} });
+    CX.toast(r.email_configured ? 'Key emailed to ' + r.sent_to : 'Email is not configured (SMTP) — copy the key from here instead');
+  });
+  const today = new Date(); const fyStart = new Date(today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1, 3, 1);
+  const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  $('expFrom').value = iso(fyStart); $('expTo').value = iso(today);
+  $('expForm').onsubmit = (ev) => { ev.preventDefault();
+    location.href = CX.apiUrl(`/api/admin/export.csv?from=${$('expFrom').value}&to=${$('expTo').value}&status=${$('expStatus').value}`); };
+  health(); report(); codes();
+})();
+</script>
+</body>
+</html>

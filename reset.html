@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="cx-api" content="https://api.clavexis.com">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Choose a new password — ClavexisAI</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/css/base.css"><link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page auth-page"><div class="wrap" style="max-width:480px">
+  <section class="auth-card">
+    <h1 class="auth-title">Choose a new password</h1>
+    <form id="f" class="mt" novalidate>
+      <div class="field"><label for="p">New password</label>
+        <div class="pw-wrap"><input class="input" id="p" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
+          <button type="button" class="pw-eye" id="eye" aria-label="Show password">Show</button></div></div>
+      <div class="field"><label for="p2">Type it again</label><input class="input" id="p2" type="password" autocomplete="new-password"></div>
+      <p class="err" id="err" role="alert"></p>
+      <button class="btn btn-primary btn-block" id="go" type="submit">Save new password</button>
+    </form>
+    <p class="small mt"><a href="/signin" class="link">&larr; Back to sign in</a></p>
+  </section>
+</div></main>
+<script src="/js/site.js"></script>
+<script>
+(async function () {
+  await CX.chrome();
+  const $ = (id) => document.getElementById(id);
+  const token = new URLSearchParams(location.search).get('token') || '';
+  if (!token) { $('err').textContent = 'This link is incomplete — open the link from the email again, or ask for a new one.'; $('go').disabled = true; }
+  $('eye').addEventListener('click', () => { const s = $('p').type === 'password'; $('p').type = $('p2').type = s ? 'text' : 'password'; $('eye').textContent = s ? 'Hide' : 'Show'; });
+  $('f').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('err').textContent = '';
+    if ($('p').value.length < 8) { $('err').textContent = 'Use at least 8 characters.'; return; }
+    if ($('p').value !== $('p2').value) { $('err').textContent = "The two passwords don't match."; return; }
+    $('go').disabled = true;
+    try {
+      await CX.api('/api/auth/reset', { json: { token, password: $('p').value } });
+      history.replaceState(null, '', '/reset');     // don't leave the used token in the address bar
+      CX.toast('Password changed — you are signed in');
+      setTimeout(() => { location.href = '/account'; }, 900);
+    } catch (err) { $('err').textContent = err.message; $('go').disabled = false; }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="cx-api" content="https://api.clavexis.com">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClavexisAI Pricing — monthly or lifetime</title>
+<meta name="description" content="ClavexisAI: ₹2,099 a month (about $25) or ₹8,499 once for a lifetime licence (about $99). Every workspace, no message limits — local models or your own API keys. Pay by UPI or bank transfer.">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/css/base.css"><link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page"><div class="wrap">
+  <div class="page-head">
+    <p class="eyebrow">Pricing</p>
+    <h1>One app. Everything included.</h1>
+    <p class="lede">Every workspace, no message limits. ClavexisAI runs on your own computer with local models, or on your own
+      API keys &mdash; so there are no usage fees on top. <span id="payLede">Prices in rupees, including taxes; pay by UPI or bank transfer.</span></p>
+  </div>
+
+  <div class="tiers two" id="tiers"><p class="muted">Loading…</p></div>
+  <div class="panel mt" id="included"></div>
+  <p class="price-note" id="note">Monthly is paid up front with no automatic renewal. Lifetime is one payment for version 1 and all its updates.
+    <span id="noteCur">Dollar amounts are a guide; you pay the rupee price.</span></p>
+
+  <section class="mt2">
+    <div class="sec-head"><h2 style="font-size:1.7rem">Questions</h2></div>
+    <div class="grid">
+      <div class="card"><h3>Can I try it first?</h3><p>There's no free trial. The tour on the home page shows every screen of the
+        real app, and if ClavexisAI doesn't work on your computer as described and we can't fix it, you get your money back.</p></div>
+      <div class="card"><h3>How do I pay?</h3><p id="faqPay">At checkout you pay the exact amount by UPI (scan the QR code with any UPI app) or by bank
+        transfer, then enter the transaction reference. We confirm the payment and your licence key appears in your account and inbox &mdash;
+        usually within a few business hours.</p></div>
+      <div class="card"><h3>How do I use my licence?</h3><p>Open ClavexisAI and paste the key when it asks (or Settings &rarr; Account &rarr; Licence) and press Activate.
+        A licence covers up to 3 of your own computers; you can move a key to a new computer from your account page.</p></div>
+      <div class="card"><h3>Does monthly renew automatically?</h3><p>No. You pay for one month up front. Buying another month
+        extends your existing key &mdash; nothing to reinstall.</p></div>
+      <div class="card"><h3>What does lifetime include?</h3><p>One payment, no end date: everything in ClavexisAI version 1 and all its
+        updates, on up to 3 of your computers.</p></div>
+      <div class="card"><h3>Do I pay for the AI on top?</h3><p>Not to us. Use free local models (Ollama) on your own computer, or plug in
+        your own key for OpenAI, Anthropic, Google Gemini, OpenRouter, DeepSeek, Mistral, Groq or xAI, and pay that provider directly for what you use.</p></div>
+      <div class="card"><h3>Can I share it?</h3><p>No. A licence is for you or your organisation only. Under the
+        <a href="/eula" style="color:var(--brand)">licence agreement</a> you sign at checkout, republishing or giving the software or key to
+        anyone else makes you liable for the price of every copy provided, plus compensation.</p></div>
+      <div class="card"><h3>Refunds?</h3><p>Full refund within 7 days if the key hasn't been activated. See the
+        <a href="/refunds" style="color:var(--brand)">refund policy</a>.<span id="faqIntl"> Outside India? Email contact@clavexis.com for international payment.</span></p></div>
+    </div>
+  </section>
+</div></main>
+
+<script src="/js/site.js"></script>
+<script>
+(async function () {
+  await CX.chrome();
+  const cfg = await CX.api('/api/plans');
+  const p = cfg.plans[0];
+  const want = new URLSearchParams(location.search).get('kind');
+  const cardOnly = cfg.card_only;
+  const usd = (n) => n && !cardOnly ? ` <span class="dim small" style="font-weight:500">&asymp; $${n}</span>` : '';
+  const price = (inrN, usdN) => cardOnly ? CX.usd(usdN) : CX.inr(inrN);
+  if (cfg.pay_card) document.getElementById('faqIntl').textContent = ' Anywhere in the world you can pay by card or PayPal.';
+  if (cardOnly) {
+    document.getElementById('payLede').textContent = 'Prices in US dollars; pay by card, PayPal, Apple Pay or Google Pay.';
+    document.getElementById('noteCur').textContent = 'Sales tax or VAT is added at checkout where it applies.';
+    document.getElementById('faqPay').innerHTML = 'At checkout you pay by card, PayPal, Apple Pay or Google Pay on the secure checkout of our '
+      + 'reseller, who handles the payment and emails your receipt. Your licence key appears in your account and inbox as soon as the '
+      + 'payment goes through.';
+  }
+  const card = (kind, title, inrN, tag, sub, usdN, hot) => `
+    <div class="tier${hot ? ' hot' : ''}" id="buy-${kind}">
+      <div class="tier-top"><h3>${title}</h3>${hot ? '<span class="badge">Best value</span>' : ''}</div>
+      <div class="price">${price(inrN, usdN)} <s>${tag}</s>${usd(usdN)}</div>
+      <p class="who">${sub}</p>
+      <a class="btn ${hot ? 'btn-primary' : 'btn-ghost'} btn-sm" href="/checkout?plan=${p.id}&kind=${kind}&months=1">Buy ${title.toLowerCase()}</a>
+    </div>`;
+  document.getElementById('tiers').innerHTML =
+    card('subscription', 'Monthly', p.monthly, '/mo', 'Pay a month at a time. No automatic renewal.', p.usd_monthly, false) +
+    card('lifetime', 'Lifetime', p.lifetime, 'once', 'Pay once, keep it — version 1 and every update to it.', p.usd_lifetime, true);
+  document.getElementById('included').innerHTML = `<h2 style="margin-top:0;font-size:1.25rem">Both include</h2>
+    <ul class="checks">${p.features.map((f) => `<li>${CX.esc(f)}</li>`).join('')}<li>Use it on up to ${p.devices} of your own computers</li></ul>`;
+  if (want) { const el = document.getElementById(want === 'lifetime' ? 'buy-lifetime' : 'buy-subscription'); if (el) el.scrollIntoView({ block: 'center' }); }
+})();
+</script>
+</body>
+</html>

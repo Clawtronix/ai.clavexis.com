@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="cx-api" content="https://api.clavexis.com">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in — ClavexisAI</title>
+<meta name="description" content="Sign in to your ClavexisAI account to see your licence keys, orders and invoices.">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/css/base.css"><link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page auth-page"><div class="wrap">
+  <div class="auth">
+    <aside class="auth-side">
+      <p class="eyebrow">Your account</p>
+      <h1>Everything you bought, <span class="grad-text">in one place.</span></h1>
+      <ul class="auth-points">
+        <li><b>Licence keys</b><span>Copy your key any time, and see which computers use it.</span></li>
+        <li><b>Orders &amp; invoices</b><span>Every purchase with a printable invoice.</span></li>
+        <li><b>Move to a new computer</b><span>Free a seat yourself &mdash; no support ticket needed.</span></li>
+      </ul>
+      <p class="dim small">Your ClavexisAI app keeps its own sign-in on your computer; this account is for the store.</p>
+    </aside>
+
+    <section class="auth-card" aria-labelledby="h">
+      <div class="seg seg-full" id="tabs" role="tablist">
+        <button data-t="login" class="on" role="tab" aria-selected="true">Sign in</button>
+        <button data-t="register" role="tab" aria-selected="false">Create account</button>
+      </div>
+
+      <form id="f" class="mt" novalidate>
+        <h2 id="h" class="auth-title">Welcome back</h2>
+        <div class="field hidden" id="nameField"><label for="n">Full name</label><input class="input" id="n" autocomplete="name" placeholder="Your name"></div>
+        <div class="field"><label for="e">Email</label><input class="input" id="e" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+        <div class="field">
+          <div class="field-top"><label for="p">Password</label><a href="#" id="forgotLink" class="small link">Forgot password?</a></div>
+          <div class="pw-wrap"><input class="input" id="p" type="password" required minlength="8" autocomplete="current-password" placeholder="At least 8 characters">
+            <button type="button" class="pw-eye" id="eye" aria-label="Show password">Show</button></div>
+          <p class="dim small hidden" id="pwHint">At least 8 characters. A short phrase is easy to remember and hard to guess.</p>
+        </div>
+        <p class="err" id="err" role="alert"></p>
+        <button class="btn btn-primary btn-block" id="go" type="submit">Sign in</button>
+        <p class="dim small mt hidden" id="legal">By creating an account you agree to the <a href="/terms" class="link">terms of sale</a>
+          and <a href="/privacy" class="link">privacy policy</a>.</p>
+      </form>
+
+      <form id="ff" class="mt hidden" novalidate>
+        <h2 class="auth-title">Reset your password</h2>
+        <p class="muted small">Enter your account's email address and we'll send you a link to choose a new password.</p>
+        <div class="field mt"><label for="fe">Email</label><input class="input" id="fe" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+        <p class="err" id="ferr" role="alert"></p>
+        <div class="note ok hidden" id="fok"></div>
+        <button class="btn btn-primary btn-block" id="fgo" type="submit">Email me a reset link</button>
+        <p class="small mt"><a href="#" id="backLink" class="link">&larr; Back to sign in</a></p>
+      </form>
+    </section>
+  </div>
+</div></main>
+<script src="/js/site.js"></script>
+<script>
+(async function () {
+  const q = new URLSearchParams(location.search);
+  const next = q.get('next') || '/account';
+  const safeNext = /^\/(?!\/)/.test(next) ? next : '/account';
+  if (await CX.chrome()) { location.href = safeNext; return; }
+  const $ = (id) => document.getElementById(id);
+  let mode = 'login';
+  function setMode(m) {
+    mode = m;
+    $('tabs').querySelectorAll('button').forEach((x) => { const on = x.dataset.t === m; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); });
+    const reg = m === 'register';
+    $('nameField').classList.toggle('hidden', !reg); $('pwHint').classList.toggle('hidden', !reg);
+    $('legal').classList.toggle('hidden', !reg); $('forgotLink').classList.toggle('hidden', reg);
+    $('h').textContent = reg ? 'Create your account' : 'Welcome back';
+    $('go').textContent = reg ? 'Create account' : 'Sign in';
+    $('p').autocomplete = reg ? 'new-password' : 'current-password';
+    $('err').textContent = '';
+    $('f').classList.remove('hidden'); $('ff').classList.add('hidden');
+    document.title = (reg ? 'Create account' : 'Sign in') + ' — ClavexisAI';
+  }
+  $('tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-t]'); if (b) setMode(b.dataset.t); });
+  if (q.get('mode') === 'register') setMode('register');
+  $('eye').addEventListener('click', () => {
+    const show = $('p').type === 'password'; $('p').type = show ? 'text' : 'password';
+    $('eye').textContent = show ? 'Hide' : 'Show'; $('eye').setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  });
+  $('f').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('err').textContent = '';
+    const email = $('e').value.trim(), pw = $('p').value;
+    if (!email || !email.includes('@')) { $('err').textContent = 'Enter your email address.'; $('e').focus(); return; }
+    if (pw.length < 8) { $('err').textContent = 'The password needs at least 8 characters.'; $('p').focus(); return; }
+    $('go').disabled = true; const label = $('go').textContent; $('go').textContent = mode === 'login' ? 'Signing in…' : 'Creating account…';
+    try { await CX.api('/api/auth/' + mode, { json: { email, password: pw, name: $('n').value.trim() } }); location.href = safeNext; }
+    catch (err) { $('err').textContent = err.message; $('go').disabled = false; $('go').textContent = label; }
+  });
+  // forgot password
+  $('forgotLink').addEventListener('click', (e) => {
+    e.preventDefault(); $('f').classList.add('hidden'); $('ff').classList.remove('hidden');
+    $('fe').value = $('e').value; $('fok').classList.add('hidden'); $('ferr').textContent = ''; $('fe').focus();
+  });
+  $('backLink').addEventListener('click', (e) => { e.preventDefault(); setMode('login'); });
+  $('ff').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('ferr').textContent = '';
+    const email = $('fe').value.trim();
+    if (!email.includes('@')) { $('ferr').textContent = 'Enter your email address.'; return; }
+    $('fgo').disabled = true;
+    try { const r = await CX.api('/api/auth/forgot', { json: { email } }); $('fok').textContent = r.message; $('fok').classList.remove('hidden'); }
+    catch (err) { $('ferr').textContent = err.message; }
+    finally { $('fgo').disabled = false; }
+  });
+})();
+</script>
+</body>
+</html>

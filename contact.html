@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="cx-api" content="https://api.clavexis.com">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contact ClavexisAI — support, grievances and business details</title>
+<meta name="description" content="Contact ClavexisAI support, reach our Grievance Officer, and see the registered business details of the seller.">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/css/base.css"><link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page"><div class="wrap">
+  <div class="page-head">
+    <p class="eyebrow">Contact</p>
+    <h1>We're here to help.</h1>
+    <p class="lede">Questions about ClavexisAI, your licence, a payment or an invoice &mdash; write to us and a person will reply.</p>
+  </div>
+
+  <div class="grid" id="cards"><p class="muted">Loading…</p></div>
+
+  <section class="panel mt2" id="biz"></section>
+</div></main>
+
+<script src="/js/site.js"></script>
+<script>
+(async function () {
+  await CX.chrome();
+  const b = await CX.api('/api/business');
+  const e = CX.esc;
+  const mail = (m, subj) => `<a href="mailto:${e(m)}${subj ? '?subject=' + encodeURIComponent(subj) : ''}" style="color:var(--brand)">${e(m)}</a>`;
+  document.getElementById('cards').innerHTML = `
+    <div class="card"><h3>Support</h3>
+      <p>Installing, activating, using ClavexisAI, and anything about orders or invoices.</p>
+      <p class="mt">${mail(b.support_email, 'ClavexisAI support')}${b.support_phone ? `<br>${e(b.support_phone)}` : ''}</p>
+      <p class="dim small mt">${e(b.support_hours)}. We reply within one business day.</p></div>
+    <div class="card"><h3>Payments and orders</h3>
+      <p>Paid but no key yet? Reply to your order email, or write to us with your order number (it starts with "CX")
+        and a screenshot of the payment.</p>
+      <p class="mt">${mail(b.support_email, 'Order ')}</p>
+      <p class="dim small mt">${b.card_only ? 'Keys are issued automatically as soon as the payment goes through.'
+        : 'Keys are usually issued within a few business hours of payment.'}</p></div>
+    <div class="card"><h3>Grievance Officer</h3>
+      <p>${b.grievance_officer ? `<b>${e(b.grievance_officer)}</b><br>` : ''}${mail(b.grievance_email, 'Grievance')}</p>
+      <p class="dim small mt">For complaints about a purchase, our service or your personal data. We acknowledge every complaint
+        within 48 hours and resolve it within one month.</p></div>`;
+  const rows = [['Business name', b.legal_name], ['Business type', b.entity], ['Proprietor', b.proprietor], ['Address', b.address], ['State', b.state],
+    ['GSTIN', b.gstin], ['CIN', b.cin], ['LLPIN', b.llpin], ['Udyam registration', b.udyam]].filter((r) => r[1]);
+  document.getElementById('biz').innerHTML = `<h2 style="margin-top:0">Business details</h2>
+    <p class="muted small">ClavexisAI is sold by:</p>
+    <dl class="kv mt">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${e(v)}</dd>`).join('')}</dl>
+    <p class="dim small mt">See also the <a href="/terms" style="color:var(--brand)">terms of sale</a>,
+      <a href="/refunds" style="color:var(--brand)">refund policy</a> and <a href="/privacy" style="color:var(--brand)">privacy policy</a>.</p>`;
+})();
+</script>
+</body>
+</html>
