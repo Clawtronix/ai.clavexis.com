@@ -2423,7 +2423,7 @@ html.ea [data-live],html:not(.ea) [data-ea]{display:none!important}
     ["Installing",[
       ["\"Windows protected your PC\" when I run the installer","The installer isn't code-signed yet. Click <strong>More info → Run anyway</strong>. Check it's genuine first:<div class='cmd'><code>certutil -hashfile ClavexisAI-*-windows-setup.exe SHA256</code><button class='copy' type='button'>Copy</button></div>"],
       ["My antivirus blocked or deleted it","Same reason (not code-signed). If the checksum matches the one on the download page, restore the file and allow it in your antivirus."],
-      ["The first start takes a long time","The first start can download what the app needs: 10-20 minutes on a slow connection. Leave it running. Later starts take seconds."],
+      ["The first start takes a long time","With the Windows installer it takes about a minute: the app prepares its database, and everything else comes included. The zip, macOS and Linux downloads install the app's libraries on their first start instead: 10-20 minutes on a slow connection. Leave it running. Later starts take seconds."],
       ["Linux: \"command not found\" or a Python error","Install Python and its virtual-env module, then run <code>./clavexisai.sh</code> again.<div class='cmd'><code>sudo apt install python3 python3-venv python3-pip</code><button class='copy' type='button'>Copy</button></div>Fedora: <code>sudo dnf install python3 python3-pip</code>"]
     ]],
     ["Starting",[

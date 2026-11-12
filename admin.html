@@ -77,6 +77,7 @@
 (async function () {
   const user = await CX.chrome();
   const $ = (id) => document.getElementById(id);
+  if (user && user.admin_unconfirmed) { document.querySelector('.page .wrap').innerHTML = '<h1>Confirm your address first</h1><p class="muted mt">Admin rights start once you prove this mailbox is yours: use the link in the "Confirm your ClavexisAI admin address" email (or <a href="/signin">Forgot password</a>). On the store computer you can also run <code>tools\\make_admin.py</code>.</p>'; return; }
   if (!user || !user.admin) { document.querySelector('.page .wrap').innerHTML = '<h1>Admins only</h1><p class="muted mt">Sign in with an address listed in ADMIN_EMAILS.</p>'; return; }
   let data = null, filter = 'submitted';
 
